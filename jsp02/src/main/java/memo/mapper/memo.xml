@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace : sql 명령어들의 집합, java의 패키지와 같은 개념, sql을 사용하기전
+회원관리다, 게시판이다...등 구분짓기 위해 주로 사용됨  -->
+<mapper namespace="memo">
+
+ <select id="listAll" resultType="memo.dto.MemoDTO"> <!-- resultType : DTO의 return타입으로 이해하면됨. -->
+ <!-- 13. 여기가 memo.listAll에 대한 SQL문이 들어있는곳. 아래에 적힌것들이 SQL문임. -->
+ <!-- SQL문 다봤으면 12-4번으로 다시 이동. 이름 또는 내용으로 찾은 정보들. 옆 DB사진을 참고하자 -->
+
+  select idx,writer,memo, 
+  to_char(post_date, 'yyyy-mm-dd hh24:mi:ss') post_date 
+  from memo 
+  where writer like '%'||#{search}||'%' or  memo like '%'||#{search}||'%'
+  order by idx desc
+   <!-- 주의! : SQL문 적고 ;적으면 안됨 -->
+ </select>
+ 
+ <select id="list" resultType="memo.dto.MemoDTO">
+ <!--14. 여기가 memo.list에 대한 SQL문이 들어있는곳. 아래에 적힌것들이 SQL문임. -->
+ <!-- SQL문 다봤으면 12-6번으로 다시 이동. 이름으로 찾거나 내용으로 찾은 정보들. -->
+ 
+  select idx,writer,memo, 
+  to_char(post_date, 'yyyy-mm-dd hh24:mi:ss') post_date 
+  from memo 
+  where ${searchkey} like '%'||#{search}||'%'
+  order by idx desc
+  
+ </select>
+ 
+ 
+ 
+ 
+ 
+ <!--24. 해당 인덱스, 즉, 해당 글번호에 대한 데이터를 긁어오는 SQL문임. -->
+ <!--주의점! : select type에선 result가 꼭 들어가야한다. -->
+ <!--다시 23번으로 돌아가서 23번을 마저 끝내자  -->
+ 
+  <select id="view" resultType="memo.dto.MemoDTO">
+  select * from memo where idx=#{idx}
+ </select>
+ 
+ 
+ <!-- 28. 새로운 메모로 업데이트할 SQL문.-->
+ <!-- 다시 27번으로 돌아가서 27번을 마저 끝내자 -->
+ <update id="update"> 
+  update memo set writer=#{writer}, memo=#{memo}
+  where idx=#{idx}
+ </update>
+ 
+ 
+ <!-- 32. 내가 원하는 글번호의 메모를 삭제하는 SQL문 -->
+ <!-- 다시 31번으로 돌아가서 31번을 마저 끝내자 -->
+ <delete id="delete" parameterType="int">
+  delete from memo
+  where idx=#{idx}
+ </delete>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ <!--parameterType="memo.dto.MemoDTO" 생략가능하다. -->
+ <insert id="insert" parameterType="memo.dto.MemoDTO">
+ <!--14. 여기가 memo.insert에 대한 SQL문이 들어있는곳. 아래에 적힌것들이 SQL문임. -->
+ <!-- SQL문 다봤으면 18-3번으로 다시 이동. 번호, 이름, 메모를 추가하는 SQL문 -->
+  insert into memo(idx, writer, memo) 
+  values ((select nvl(max(idx)+1, 1) from memo), 
+  #{writer}, #{memo})
+ </insert>
+ <!--  mybatis 변수처리하는 두가지 방법
+ 1) #{변수} : 따옴표 포함 ex)#{writer} => writer='kim'
+ 2) ${변수} : 따옴표 미포함 exi)#{writer} => writer=kim
+  -->
+</mapper>

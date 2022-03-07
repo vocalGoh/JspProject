@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace : sql 명령어들의 집합, java의 패키지와 같은 개념, sql을 사용하기전
+회원관리다, 게시판이다...등 구분짓기 위해 주로 사용됨  -->
+<mapper namespace="member">
+
+<insert id="insert">
+  insert into member (name,birth,email,phone,userid,pwd) values (#{name},#{birth},#{email},#{phone},#{userid},#{pwd})
+ </insert>
+
+
+
+ <select id="login_chechk" resultType="String">
+  select name from member where userid=#{userid} and pwd=#{pwd}
+ </select>
+
+
+<select id="view" resultType="member.dto.MemberDTO">
+ select * from member
+ where userid=#{userid}
+</select>
+
+
+<update id="update">
+ update member set name=#{name}, birth=#{birth}, email=#{email}, phone=#{phone}
+ where userid=#{userid} and pwd=#{pwd}
+</update>
+ 
+
+
+
+
+
+
+</mapper>

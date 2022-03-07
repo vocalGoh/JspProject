@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!-- 이곳은 SQL문을 구분하여 따로 적는 곳입니다 -->
+<mapper namespace="board">
+
+<!--1-6. 데이터에 저장되어있는 정보 리스트를 들고옴 -->
+
+
+ <!-- 12-14. 게시물 목록을 뽑아주는 SQL문 -->
+ <select id="list" resultType="board.dto.BoardDTO">
+   select * 
+   from (
+    select A.*, rownum as rn
+    from (
+        select num,writer,subject,reg_date,readcount
+         ,filename,filesize,down,re_level
+         ,(select count(*) from board_comment 
+           where board_num=num) comment_count, show
+    from board 
+    order by ref desc, re_step
+    ) A
+   ) 
+   where rn between #{start} and #{end}
+ </select>
+ <!-- 12-13번으로 돌아가자  -->
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ <!--2-15. 게시물을 DB에 저장하는 SQL문 -->
+ <insert id="insert">
+  insert into board
+   (num,writer,subject,passwd,ref,re_step,re_level
+   ,content,ip,filename,filesize) 
+  values
+   ( (select nvl(max(num)+1,1) from board)
+   ,#{writer},#{subject},#{passwd}
+   ,(select nvl(max(num)+1,1) from board)
+   ,1,0,#{content},#{ip}, #{filename}, #{filesize})
+ </insert>
+ <!-- 2-14번으로 돌아가자 -->
+ 
+ 
+ 
+ <!--3-5. n번째 게시물의 첨부파일 이름 가져오는 SQL문 -->
+ <select id="getFileName" resultType="String">
+  select filename
+  from board
+  where num=#{num}
+ </select>
+ <!-- 3-4번으로 돌아가자 -->
+ 
+ 
+ <!-- 3-17. 다운로드수 증가처리하는 SQL문 -->
+ <update id="plusDown">
+  update board set down=down+1 where num=#{num}
+ </update>
+ <!-- 3-16번으로 돌아가자 -->
+ 
+ 
+ <!-- 4-11. 게시물 상세 정보 -->
+ <select id="view" resultType="board.dto.BoardDTO">
+  select * from board
+  where num=#{num}
+ </select>
+ <!-- 4-10번으로 돌아가자 -->
+ 
+ 
+ <!--4-6. 조회수 증가 처리하는 SQL문 -->
+ <update id="plusReadCount">
+  update board set readcount=readcount+1 
+  where num=#{num}
+ </update>
+ <!-- 4-5번으로 돌아가자 -->
+ 
+ 
+ <!-- 댓글 목록  -->
+ <select id="commentList" resultType="board.dto.BoardCommentDTO">
+  select * from board_comment 
+		where board_num=#{num}
+ </select>
+ 
+ <!-- 댓글 쓰기 -->
+ <insert id="commentAdd">
+  insert into board_comment
+  (comment_num,board_num,writer,content) values
+  ((select nvl(max(comment_num)+1,1) from board_comment)
+    ,#{board_num}, #{writer}, #{content})
+ </insert>
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+ 
+ 
+ 
+
+
+ <!-- 답글 순서 조정 -->
+ <update id="updateStep">
+  update board
+  set re_step=re_step+1
+  where ref=#{ref} and re_step >= #{re_step}
+ </update>
+ 
+ 
+ <!-- 8-7. 답글 쓰기 SQL문 -->
+ <insert id="reply">
+ insert into board 
+  (num,writer,subject,passwd,ref
+  ,re_step,re_level,content,ip,filename,filesize)
+ values
+  ( (select nvl(max(num)+1,1) from board)
+    ,#{writer},#{subject},#{passwd}
+    , #{ref}, #{re_step}, #{re_level}
+    , #{content}, #{ip}, #{filename}, #{filesize} )
+ </insert> 
+ <!-- 8-8. 위 list쪽에서 순서조정 해줬음 -->
+ <!-- 8-6번으로 돌아간다. -->
+ 
+ 
+ 
+ <!-- 비밀번호 체크 -->
+ <select id="pass_check" resultType="String">
+  select passwd from board
+  where num=#{num} and passwd=#{passwd}
+ </select>
+ 
+ 
+ <!-- 게시물 수정 -->
+ <update id="update">
+  update board
+  set  writer=#{writer}, subject=#{subject}
+   , content=#{content}, filename=#{filename}
+   , filesize=#{filesize}, down=#{down}
+  where num=#{num}
+ 
+ </update> 
+ 
+ 
+ 
+ 
+ <!-- 게시물 삭제(진짜 삭제 X) -->
+ <update id="delete">
+  update board set show='n' 
+  where num=#{num}
+ </update> 
+ 
+ 
+ 
+ 
+ <!-- 11-9. 키워드로 검색하는 SQL문-->
+ <!-- 이름, 제목, 내용, 각각 하나씩을 선택해 검색을 하거나 아님 저 셋 모두를 이용해 찾는게 있었음-->
+ <!-- 그것에 대한 SQL문임. 특히, show='y'를 잘 기억해두자 -->
+ <select id="searchList" resultType="board.dto.BoardDTO">
+  select num,writer,subject,reg_date,readcount
+   ,filename,filesize,down,re_level
+   ,(select count(*) from board_comment 
+   where board_num=num) comment_count, show
+   from board
+   <choose> 
+    <when test="search_option != 'all'">
+     where ${search_option} like #{keyword} and show='y'
+    </when>
+    <otherwise>
+     where (writer like #{keyword} 
+     or subject like #{keyword}
+     or content like #{keyword}) 
+     and show='y'
+    </otherwise>
+   </choose>
+   order by ref desc, re_step
+ </select>
+ <!-- 11-8번으로 돌아가기 -->
+
+
+
+ <!-- 12-7. 게시물 갯수 계산 -->
+ <select id="count" resultType="int">
+   select count(*) from board
+ </select> 
+ <!-- 12-6번으로 복귀 -->
+ 
+  
+</mapper>
+
+
